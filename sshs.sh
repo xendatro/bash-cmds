@@ -2,11 +2,11 @@
 
 NUM_OF_ARGS="$#"
 MODE=""
-FILENAME="addresses.txt"
+FILENAME="$HOME/.addresses.txt"
 KEY="$2"
 
 invalid() {
-	echo "Usage error. $1"
+	echo "Usage error. Type sshs -h for help menu. Error: $1"
 	exit 1
 }
 
@@ -50,9 +50,12 @@ create() {
 	if [ "$CONFIRM" = "n" ]; then
 		echo Process exited.
 		exit 0
-	fi		
-	echo "${KEY} ${ADDRESS}" >> "$FILENAME"
-	echo "Successfully added address."
+	elif [ "$CONFIRM" = "y" ]; then
+		echo "${KEY} ${ADDRESS}" >> "$FILENAME"
+		echo "Successfully added address."
+		exit 0	
+	fi
+	echo Unknown input. Aborting...
 	exit 0
 }
 
@@ -61,7 +64,7 @@ delete() {
 		echo "Cannot delete key/address because it does not exist."
 		exit 0
 	fi
-	sed -i /"^$KEY "/d "$FILENAME"
+	sed -i "/^$KEY /d" "$FILENAME"
 	echo "Successfully deleted address."
 }
 
@@ -70,13 +73,23 @@ attach() {
 		echo "Cannot attach to key/address because it does not exist."
 		exit 0
 	fi	
-	echo "Attempting to connect to ${ADDRESS}..."
 	ADDRESS=$(awk -v key="$KEY" '$1 == key {print $2}' "$FILENAME")
+	echo "Attempting to connect to ${ADDRESS}..."
 	ssh "$ADDRESS"
 }
 
 list() {
 	cat "$FILENAME"
+}
+
+help() {
+	echo "Usage sshs [option] [key]"
+	echo "  -c [key]     - Create/bookmark an address"
+	echo "  -d [key]     - Delete a saved address"
+	echo "  -a [key]     - SSH into a saved address"
+	echo "  -l           - List all saved addresses"
+	echo "  -h           - Display help menu"
+	exit 0
 }
 
 if [ "$MODE" = "CREATE" ]; then
@@ -87,4 +100,6 @@ elif [ "$MODE" = "ATTACH" ]; then
 	attach
 elif [ "$MODE" = "LIST" ]; then
 	list
+elif [ "$MODE" = "HELP" ]; then
+	help
 fi
